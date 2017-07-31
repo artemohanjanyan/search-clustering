@@ -12,14 +12,6 @@ public class SearchLogAdapter {
         this.searchLogInfo = searchLogInfo;
     }
 
-    public void addClickThrough(String query, String click) {
-        int queryI = getNodeI(biGraph.left, searchLogInfo.queries, query);
-        int clickI = getNodeI(biGraph.right, searchLogInfo.clicks, click);
-
-        addEdge(biGraph.left.get(queryI), clickI);
-        addEdge(biGraph.right.get(clickI), queryI);
-    }
-
     private static int getNodeI(List<BiGraph.Node> graphPart,
                                 Map<String, Integer> indexMap,
                                 String str) {
@@ -38,5 +30,13 @@ public class SearchLogAdapter {
             }
         }
         node.edges.add(new BiGraph.Edge(otherNodeI, 1));
+    }
+
+    public void addClickThrough(String query, String click) {
+        int queryI = getNodeI(biGraph.left, searchLogInfo.queries, query);
+        int clickI = getNodeI(biGraph.right, searchLogInfo.clicks, click);
+
+        addEdge(biGraph.left.get(queryI), clickI);
+        addEdge(biGraph.right.get(clickI), queryI);
     }
 }

@@ -8,9 +8,7 @@ import java.util.List;
  */
 public class BiGraph {
 
-    public static class Node {
-        List<Edge> edges = new ArrayList<>();
-    }
+    public List<Node> left = new ArrayList<>(), right = new ArrayList<>();
 
     public static class Edge {
         int dst;
@@ -22,5 +20,7 @@ public class BiGraph {
         }
     }
 
-    public List<Node> left = new ArrayList<>(), right = new ArrayList<>();
+    public static class Node {
+        List<Edge> edges = new ArrayList<>();
+    }
 }
