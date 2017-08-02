@@ -11,8 +11,8 @@ public class BiGraph {
     public List<Node> left = new ArrayList<>(), right = new ArrayList<>();
 
     public static class Edge {
-        int dst;
-        int weight;
+        public int dst;
+        public int weight;
 
         public Edge(int dst, int weight) {
             this.dst = dst;

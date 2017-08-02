@@ -1,10 +1,18 @@
 group 'artemohanjanyan'
 version '1.0-SNAPSHOT'
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
+    }
+}
+
 apply plugin: 'java'
 apply plugin: 'application'
-
-mainClassName = "aohanjanyan.search_clustering.Main"
+apply plugin: 'org.junit.platform.gradle.plugin'
 
 sourceCompatibility = 1.8
 
@@ -13,5 +21,13 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M4'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M4'
+    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
+}
+
+mainClassName = "aohanjanyan.search_clustering.Main"
+
+junitPlatform {
+    platformVersion "1.0.0-M4"
 }
