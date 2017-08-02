@@ -1,16 +1,16 @@
 package aohanjanyan.search_clustering;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SearchLogAdapter {
-    private final BiGraph biGraph;
-    private final SearchLogInfo searchLogInfo;
-
-    public SearchLogAdapter(BiGraph biGraph, SearchLogInfo searchLogInfo) {
-        this.biGraph = biGraph;
-        this.searchLogInfo = searchLogInfo;
-    }
+/**
+ * TODO
+ */
+public class SearchLog {
+    public BiGraph graph = new BiGraph();
+    public Map<String, Integer> queries = new HashMap<>();
+    public Map<String, Integer> clicks = new HashMap<>();
 
     private static int getNodeI(List<BiGraph.Node> graphPart,
                                 Map<String, Integer> indexMap,
@@ -33,10 +33,10 @@ public class SearchLogAdapter {
     }
 
     public void addClickThrough(String query, String click) {
-        int queryI = getNodeI(biGraph.left, searchLogInfo.queries, query);
-        int clickI = getNodeI(biGraph.right, searchLogInfo.clicks, click);
+        int queryI = getNodeI(graph.left, queries, query);
+        int clickI = getNodeI(graph.right, clicks, click);
 
-        addEdge(biGraph.left.get(queryI), clickI);
-        addEdge(biGraph.right.get(clickI), queryI);
+        addEdge(graph.left.get(queryI), clickI);
+        addEdge(graph.right.get(clickI), queryI);
     }
 }

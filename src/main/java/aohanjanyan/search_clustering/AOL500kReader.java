@@ -3,12 +3,15 @@ package aohanjanyan.search_clustering;
 import java.io.BufferedReader;
 import java.io.IOException;
 
+/**
+ * TODO
+ */
 public class AOL500kReader {
-    private final SearchLogAdapter searchLogAdapter;
+    private final SearchLog searchLog;
     private ReadObserver readObserver = null;
 
-    public AOL500kReader(SearchLogAdapter searchLogAdapter) {
-        this.searchLogAdapter = searchLogAdapter;
+    public AOL500kReader(SearchLog searchLog) {
+        this.searchLog = searchLog;
     }
 
     private static void skipHeaders(BufferedReader reader) throws IOException {
@@ -29,7 +32,7 @@ public class AOL500kReader {
             if (row.length != 5) {
                 continue;
             }
-            searchLogAdapter.addClickThrough(row[1], row[4]);
+            searchLog.addClickThrough(row[1], row[4]);
 
             readObserver.lineRead(++lineI);
         }

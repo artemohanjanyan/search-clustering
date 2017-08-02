@@ -11,10 +11,8 @@ import java.nio.file.Paths;
  */
 public class Main {
     public static void main(String[] args) {
-        BiGraph biGraph = new BiGraph();
-        SearchLogInfo searchLogInfo = new SearchLogInfo();
-        SearchLogAdapter searchLogAdapter = new SearchLogAdapter(biGraph, searchLogInfo);
-        AOL500kReader aol500kReader = new AOL500kReader(searchLogAdapter);
+        SearchLog searchLog = new SearchLog();
+        AOL500kReader aol500kReader = new AOL500kReader(searchLog);
 
         aol500kReader.setReadObserver(lineI -> {
             if (lineI % 100000 == 0) {
@@ -40,7 +38,7 @@ public class Main {
             }
         }
 
-        System.out.println(biGraph.left.size() + " unique queries");
-        System.out.println(biGraph.right.size() + " unique clicks");
+        System.out.println(searchLog.graph.left.size() + " unique queries");
+        System.out.println(searchLog.graph.right.size() + " unique clicks");
     }
 }
