@@ -8,9 +8,20 @@ import java.util.List;
  */
 public class BiGraph {
 
-    public List<Node> left = new ArrayList<>(), right = new ArrayList<>();
+    public Part left = new Part(), right = new Part();
 
-    public static class Edge {
+    private static void sortPartEdges(Part part) {
+        for (Node node : part.nodes) {
+            node.edges.sort(null);
+        }
+    }
+
+    public void sortEdges() {
+        sortPartEdges(left);
+        sortPartEdges(right);
+    }
+
+    public static class Edge implements Comparable<Edge> {
         public int dst;
         public int weight;
 
@@ -18,9 +29,54 @@ public class BiGraph {
             this.dst = dst;
             this.weight = weight;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Edge edge = (Edge) o;
+
+            return dst == edge.dst && weight == edge.weight;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = dst;
+            result = 31 * result + weight;
+            return result;
+        }
+
+        @Override
+        public int compareTo(Edge that) {
+            if (this.dst < that.dst) {
+                return -1;
+            } else if (this.dst > that.dst) {
+                return 1;
+            }
+
+            if (this.weight < that.weight) {
+                return -1;
+            } else if (this.weight > that.weight) {
+                return 1;
+            }
+            return 0;
+        }
     }
 
     public static class Node {
         List<Edge> edges = new ArrayList<>();
+    }
+
+    public static class Part {
+        List<Node> nodes = new ArrayList<>();
+
+        public int size() {
+            return nodes.size();
+        }
+
+        public Node get(int i) {
+            return nodes.get(i);
+        }
     }
 }

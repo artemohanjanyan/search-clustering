@@ -1,7 +1,6 @@
 package aohanjanyan.search_clustering;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -12,12 +11,12 @@ public class SearchLog {
     public Map<String, Integer> queries = new HashMap<>();
     public Map<String, Integer> clicks = new HashMap<>();
 
-    private static int getNodeI(List<BiGraph.Node> graphPart,
+    private static int getNodeI(BiGraph.Part graphPart,
                                 Map<String, Integer> indexMap,
                                 String str) {
         if (!indexMap.containsKey(str)) {
             indexMap.put(str, indexMap.size());
-            graphPart.add(new BiGraph.Node());
+            graphPart.nodes.add(new BiGraph.Node());
         }
         return indexMap.get(str);
     }
@@ -36,7 +35,7 @@ public class SearchLog {
         int queryI = getNodeI(graph.left, queries, query);
         int clickI = getNodeI(graph.right, clicks, click);
 
-        addEdge(graph.left.get(queryI), clickI);
-        addEdge(graph.right.get(clickI), queryI);
+        addEdge(graph.left.nodes.get(queryI), clickI);
+        addEdge(graph.right.nodes.get(clickI), queryI);
     }
 }

@@ -24,7 +24,7 @@ public class Main {
         });
 
         for (String filePath : args) {
-            try (final BufferedReader reader =
+            try (BufferedReader reader =
                          Files.newBufferedReader(Paths.get(filePath), StandardCharsets.UTF_8)) {
                 new BufferedReader(reader, 2);
                 System.out.println("Reading " + filePath + "...");
@@ -38,7 +38,9 @@ public class Main {
             }
         }
 
-        System.out.println(searchLog.graph.left.size() + " unique queries");
-        System.out.println(searchLog.graph.right.size() + " unique clicks");
+        searchLog.graph.sortEdges();
+
+        System.out.println(searchLog.graph.left.nodes.size() + " unique queries");
+        System.out.println(searchLog.graph.right.nodes.size() + " unique clicks");
     }
 }

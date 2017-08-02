@@ -28,7 +28,7 @@ public class AOL500kReader {
         String nextLine;
         int lineI = 0;
         while ((nextLine = reader.readLine()) != null) {
-            final String[] row = nextLine.split("\t");
+            String[] row = nextLine.split("\t");
             if (row.length != 5) {
                 continue;
             }

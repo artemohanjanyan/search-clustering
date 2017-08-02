@@ -1,4 +1,4 @@
-package aohanjanyan.search_clustering;
+package aohanjanyan.search_clustering.utils;
 
 import java.util.Arrays;
 
