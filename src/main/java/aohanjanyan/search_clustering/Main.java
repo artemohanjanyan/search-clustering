@@ -39,8 +39,19 @@ public class Main {
         }
 
         searchLog.graph.sortEdges();
-
         System.out.println(searchLog.graph.left.nodes.size() + " unique queries");
         System.out.println(searchLog.graph.right.nodes.size() + " unique clicks");
+
+        System.out.println("Running clustering...");
+        Clustering clustering = new Clustering(0.01);
+        clustering.setMergeObserver((i, j, isLeftPart, mergeI) -> {
+            if (mergeI % 10000 == 0) {
+                System.out.print(mergeI + " ");
+            }
+            if (mergeI % 100000 == 0) {
+                System.out.println();
+            }
+        });
+        clustering.cluster(searchLog.graph);
     }
 }
