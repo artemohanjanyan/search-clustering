@@ -1,5 +1,7 @@
 package aohanjanyan.search_clustering;
 
+import aohanjanyan.search_clustering.algorithm.BiGraph;
+
 import java.util.HashMap;
 import java.util.Map;
 

@@ -1,5 +1,7 @@
 package aohanjanyan.search_clustering;
 
+import aohanjanyan.search_clustering.algorithm.Clustering;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

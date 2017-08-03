@@ -1,31 +1,59 @@
-package aohanjanyan.search_clustering;
+package aohanjanyan.search_clustering.algorithm;
 
 import aohanjanyan.search_clustering.utils.DisjointSet;
 import aohanjanyan.search_clustering.utils.Utils;
 
 import java.util.*;
 
+/**
+ * Clustering algorithm described in
+ * "Clustering Search Engine Query Log Containing Noisy Clickthroughs"
+ * by Wing Shun Chan, Wai Ting Leung and Dik Lun Lee.
+ */
 public class Clustering {
-    private final double threshold;
+    private double threshold;
     private MergeObserver mergeObserver;
     private DisjointSet leftSets, rightSets;
 
+    /**
+     * Constructs new clustering object.
+     *
+     * @param threshold threshold required for algorithm.
+     */
     public Clustering(double threshold) {
         this.threshold = threshold;
     }
 
+    /**
+     * Set merge observer.
+     *
+     * @param mergeObserver merge observer.
+     */
     public void setMergeObserver(MergeObserver mergeObserver) {
         this.mergeObserver = mergeObserver;
     }
 
+    /**
+     * Returns disjoint-set of clusters of the left part.
+     * @return disjoint-set of clusters of the left part
+     */
     public DisjointSet getLeftSets() {
         return leftSets;
     }
 
+    /**
+     * Returns disjoint-set of clusters of the right part.
+     * @return disjoint-set of clusters of the right part
+     */
     public DisjointSet getRightSets() {
         return rightSets;
     }
 
+    /**
+     * Performs clustering.
+     * Use {@link #getLeftSets()} and {@link #getRightSets()} to get the results of clustering.
+     * @param graph graph for clustering
+     */
     public void cluster(BiGraph graph) {
         GraphPartData leftPartData = initGraphPartData(graph.left, graph.right);
         GraphPartData rightPartData = initGraphPartData(graph.left, graph.right);
@@ -39,7 +67,7 @@ public class Clustering {
                 mergeNodes(graph.left, leftPartData, graph.right, rightPartData, maxSimilarity);
                 if (mergeObserver != null) {
                     mergeObserver.nodesMerged(maxSimilarity.first, maxSimilarity.second,
-                            true, mergeCount++);
+                            true, ++mergeCount);
                 }
             }
 
@@ -48,7 +76,7 @@ public class Clustering {
                 mergeNodes(graph.right, rightPartData, graph.left, leftPartData, maxSimilarity);
                 if (mergeObserver != null) {
                     mergeObserver.nodesMerged(maxSimilarity.first, maxSimilarity.second,
-                            false, mergeCount++);
+                            false, ++mergeCount);
                 }
             }
         }
@@ -57,22 +85,22 @@ public class Clustering {
         rightSets = rightPartData.clusterSets;
     }
 
-    private Similarity findMaxSimilarity(GraphPartData partData) {
+    // ---------------------------------------------------
+    // These methods are package-private just for testing.
+    //---------------------------------------------------
+
+    Similarity findMaxSimilarity(GraphPartData partData) {
         if (partData.similarities.size() == 0) {
             return null;
         }
-        Similarity maxSimilarity = partData.similarities.descendingIterator().next();
-        if (maxSimilarity.similarity < threshold) {
-            maxSimilarity = null;
-        }
-        return maxSimilarity;
+        return partData.similarities.descendingIterator().next();
     }
 
-    private static void mergeNodes(BiGraph.Part part,
-                                   GraphPartData partData,
-                                   BiGraph.Part otherPart,
-                                   GraphPartData otherPartData,
-                                   Similarity similarity) {
+    void mergeNodes(BiGraph.Part part,
+                    GraphPartData partData,
+                    BiGraph.Part otherPart,
+                    GraphPartData otherPartData,
+                    Similarity similarity) {
         removeSimilaritiesWith(partData, similarity.first);
         removeSimilaritiesWith(partData, similarity.second);
 
@@ -112,12 +140,12 @@ public class Clustering {
         for (BiGraph.Edge edgeToOtherNode : connectedToBoth) {
             BiGraph.Node otherNode = otherPart.get(edgeToOtherNode.dst);
             otherNode.edges.removeIf(edge -> edge.dst == removedNodeI);
-            for (BiGraph.Edge otherNodeEdge : otherNode.edges) {
-                if (otherNodeEdge.dst == newNodeI) {
-                    otherNodeEdge.weight = edgeToOtherNode.weight;
-                    break;
-                }
-            }
+            otherNode.edges.stream()
+                    .filter(edge -> edge.dst == newNodeI)
+                    .findFirst()
+                    .ifPresent(
+                            edge -> edge.weight = edgeToOtherNode.weight
+                    );
         }
 
         // Update edges to deleted node
@@ -137,13 +165,9 @@ public class Clustering {
         for (BiGraph.Edge edgeToOtherNode : connectedToBoth) {
             processedIntersection.add(edgeToOtherNode.dst);
 
-            for (BiGraph.Edge edge : otherPart.get(edgeToOtherNode.dst).edges) {
-                for (BiGraph.Edge edgeToSibling : part.get(edge.dst).edges) {
-                    if (!processedIntersection.contains(edgeToSibling.dst)) {
-                        insertSimilarity(otherPart, otherPartData,
-                                edgeToOtherNode.dst,
-                                edgeToSibling.dst);
-                    }
+            for (int siblingI : siblings(otherPart, part, edgeToOtherNode.dst)) {
+                if (!processedIntersection.contains(siblingI)) {
+                    insertSimilarity(otherPart, otherPartData, edgeToOtherNode.dst, siblingI);
                 }
             }
         }
@@ -156,14 +180,12 @@ public class Clustering {
         }
 
         // Calculate similarities for new node
-        for (BiGraph.Edge edge : part.get(newNodeI).edges) {
-            for (BiGraph.Edge edgeToSibling : otherPart.get(edge.dst).edges) {
-                insertSimilarity(part, partData, newNodeI, edgeToSibling.dst);
-            }
+        for (int siblingI : siblings(part, otherPart, newNodeI)) {
+            insertSimilarity(part, partData, newNodeI, siblingI);
         }
     }
 
-    private static void removeSimilaritiesWith(GraphPartData partData, int nodeI) {
+    static void removeSimilaritiesWith(GraphPartData partData, int nodeI) {
         for (Similarity similarity : partData.nodesSimilarities.get(nodeI)) {
             partData.similarities.remove(similarity);
             partData.nodesSimilarities
@@ -173,8 +195,8 @@ public class Clustering {
         partData.nodesSimilarities.get(nodeI).clear();
     }
 
-    private static GraphPartData initGraphPartData(BiGraph.Part part,
-                                                   BiGraph.Part otherPart) {
+    GraphPartData initGraphPartData(BiGraph.Part part,
+                                    BiGraph.Part otherPart) {
         GraphPartData partData = new GraphPartData();
 
         partData.clusterSets = new DisjointSet(part.size());
@@ -187,20 +209,9 @@ public class Clustering {
         }
 
         for (int nodeI = 0; nodeI < part.size(); nodeI++) {
-            Set<Integer> processedSiblings = new HashSet<>();
-//            for (int siblingI : siblings(part, otherPart, nodeI)) {
-//                if (!processedSiblings.contains(siblingI) && siblingI > nodeI) {
-//                    insertSimilarity(part, partData, nodeI, siblingI);
-//                    processedSiblings.add(siblingI);
-//                }
-//            }
-            for (BiGraph.Edge edge : part.get(nodeI).edges) {
-                for (BiGraph.Edge edgeToSibling : otherPart.get(edge.dst).edges) {
-                    if (!processedSiblings.contains(edgeToSibling.dst)
-                            && edgeToSibling.dst > nodeI) {
-                        insertSimilarity(part, partData, nodeI, edgeToSibling.dst);
-                        processedSiblings.add(edgeToSibling.dst);
-                    }
+            for (int siblingI : siblings(part, otherPart, nodeI)) {
+                if (siblingI > nodeI) {
+                    insertSimilarity(part, partData, nodeI, siblingI);
                 }
             }
         }
@@ -208,31 +219,35 @@ public class Clustering {
         return partData;
     }
 
-//    private static Iterable<Integer> siblings(BiGraph.Part part,
-//                                              BiGraph.Part otherPart,
-//                                              int nodeI) {
-//        return () -> part.get(nodeI).edges.stream()
-//                .flatMap(edge -> otherPart.get(edge.dst).edges.stream())
-//                .map(edge -> edge.dst)
-//                .distinct()
-//                .iterator();
-//    }
+    static Iterable<Integer> siblings(BiGraph.Part part,
+                                      BiGraph.Part otherPart,
+                                      int nodeI) {
+        return () -> part.get(nodeI).edges.stream()
+                .flatMap(edge -> otherPart.get(edge.dst).edges.stream())
+                .map(edge -> edge.dst)
+                .filter(siblingI -> siblingI != nodeI)
+                .distinct()
+                .iterator();
+    }
 
-    private static void insertSimilarity(BiGraph.Part part,
-                                         GraphPartData graphPartData,
-                                         int nodeI,
-                                         int siblingI) {
+    void insertSimilarity(BiGraph.Part part,
+                          GraphPartData partData,
+                          int nodeI,
+                          int siblingI) {
         Similarity similarity = new Similarity(
                 calculateSimilarity(part.get(nodeI), part.get(siblingI)),
                 nodeI,
                 siblingI);
-        graphPartData.nodesSimilarities.get(nodeI).add(similarity);
-        graphPartData.nodesSimilarities.get(siblingI).add(similarity);
-        graphPartData.similarities.add(similarity);
+        if (similarity.similarity < threshold) {
+            return;
+        }
+        partData.nodesSimilarities.get(nodeI).add(similarity);
+        partData.nodesSimilarities.get(siblingI).add(similarity);
+        partData.similarities.add(similarity);
     }
 
-    private static double calculateSimilarity(BiGraph.Node node,
-                                              BiGraph.Node sibling) {
+    static double calculateSimilarity(BiGraph.Node node,
+                                      BiGraph.Node sibling) {
         IntPair ratio = Utils.merge(node.edges, sibling.edges,
                 Comparator.comparingInt(edge -> edge.dst),
                 new IntPair(),
@@ -245,38 +260,45 @@ public class Clustering {
                     tmpRatio.second += nodeEdge.weight + siblingEdge.weight;
                     return tmpRatio;
                 });
-        if (ratio.second == 0) {
-            return 0;
-        } else {
-            return ((double) ratio.first) / ((double) ratio.second);
-        }
+        return ((double) ratio.first) / ((double) ratio.second);
     }
 
+    /**
+     * Class for observing the progress of the algorithm.
+     */
     public interface MergeObserver {
+        /**
+         * Called after each merge operation.
+         * @param i index of the first node which was merged
+         * @param j index of the second node which was merged
+         * @param isLeftPart {@code true} if called after merging nodes in the left part,
+         *                   {@code false} otherwise
+         * @param mergeI number of performed merges
+         */
         void nodesMerged(int i, int j, boolean isLeftPart, int mergeI);
     }
 
-    private static class IntPair {
+    static class IntPair {
         int first, second;
     }
 
-    private static class GraphPartData {
+    static class GraphPartData {
         DisjointSet clusterSets;
         NavigableSet<Similarity> similarities;
         List<Set<Similarity>> nodesSimilarities;
     }
 
-    private static class Similarity implements Comparable<Similarity> {
+    static class Similarity implements Comparable<Similarity> {
         double similarity;
         int first, second;
 
-        public Similarity(double similarity, int first, int second) {
+        Similarity(double similarity, int first, int second) {
             this.similarity = similarity;
             this.first = first;
             this.second = second;
         }
 
-        public int getAnother(int one) {
+        int getAnother(int one) {
             return first - one + second;
         }
 
