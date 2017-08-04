@@ -20,6 +20,9 @@ import java.util.List;
 public class Main {
 
     private static class Options {
+        @Option(name = "-threshold", usage = "threshold", required = false)
+        double threshold = 0.1;
+
         @Option(name = "-o", usage = "output file", required = true)
         File output;
 
@@ -87,9 +90,10 @@ public class Main {
         searchLog.graph.sortEdges();
         System.out.println(searchLog.graph.left.nodes.size() + " unique queries");
         System.out.println(searchLog.graph.right.nodes.size() + " unique clicks");
+        System.out.println();
 
         System.out.println("Running clustering...");
-        Clustering clustering = new Clustering(0.01);
+        Clustering clustering = new Clustering(options.threshold);
         clustering.setMergeObserver((i, j, isLeftPart, mergeI) -> {
             if (mergeI % 100 == 0) {
                 System.out.print(mergeI + " ");
@@ -101,9 +105,9 @@ public class Main {
         clustering.cluster(searchLog.graph);
 
         for (int i = 0; i < searchLog.queryNames.size(); i++) {
-            outputPrinter.print(searchLog.queryNames.get(i));
+            outputPrinter.print(clustering.getLeftSets().find(i));
             outputPrinter.print('\t');
-            outputPrinter.println(clustering.getLeftSets().find(i));
+            outputPrinter.println(searchLog.queryNames.get(i));
         }
         outputPrinter.close();
     }
