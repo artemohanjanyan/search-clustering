@@ -245,12 +245,30 @@ class ClusteringTest {
 
     @Test
     void testCluster() {
+        final AtomicInteger initCount = new AtomicInteger(0);
+        final AtomicInteger initFinishCount = new AtomicInteger(0);
         final AtomicInteger mergeCount = new AtomicInteger(0);
-        clustering.setMergeObserver((i, j, isLeftPart, mergeI) ->
-                mergeCount.addAndGet(1));
+        clustering.setClusteringObserver(new Clustering.ClusteringObserver() {
+            @Override
+            public void nodeInitFinished(int nodeI) {
+                initCount.addAndGet(1);
+            }
+
+            @Override
+            public void initFinished() {
+                initFinishCount.addAndGet(1);
+            }
+
+            @Override
+            public void nodesMerged(int i, int j, boolean isLeftPart, int mergeI) {
+                mergeCount.addAndGet(1);
+            }
+        });
 
         clustering.cluster(graph);
 
+        assertThat(initCount.get(), is(5));
+        assertThat(initFinishCount.get(), is(1));
         assertThat(mergeCount.get(), is(3));
 
         assertThat(clustering.getLeftSets().find(0), allOf(

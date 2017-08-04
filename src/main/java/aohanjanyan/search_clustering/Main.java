@@ -20,7 +20,7 @@ import java.util.List;
 public class Main {
 
     private static class Options {
-        @Option(name = "-threshold", usage = "threshold", required = false)
+        @Option(name = "-threshold", usage = "threshold")
         double threshold = 0.1;
 
         @Option(name = "-o", usage = "output file", required = true)
@@ -94,15 +94,36 @@ public class Main {
 
         System.out.println("Running clustering...");
         Clustering clustering = new Clustering(options.threshold);
-        clustering.setMergeObserver((i, j, isLeftPart, mergeI) -> {
-            if (mergeI % 100 == 0) {
-                System.out.print(mergeI + " ");
+        clustering.setClusteringObserver(new Clustering.ClusteringObserver() {
+            @Override
+            public void nodeInitFinished(int nodeI) {
+                if (nodeI % 1000 == 0) {
+                    System.out.print(nodeI + " ");
+                }
+                if (nodeI % 10000 == 0) {
+                    System.out.println();
+                }
             }
-            if (mergeI % 2000 == 0) {
-                System.out.println();
+
+            @Override
+            public void initFinished() {
+                System.out.print("\n\nInit finished\n\n");
+            }
+
+            @Override
+            public void nodesMerged(int i, int j, boolean isLeftPart, int mergeI) {
+                if (mergeI % 100 == 0) {
+                    System.out.print(mergeI + " ");
+                }
+                if (mergeI % 1000 == 0) {
+                    System.out.println();
+                }
             }
         });
         clustering.cluster(searchLog.graph);
+        System.out.println("Finished");
+
+        System.out.println("\nPrinting results to output file...");
 
         for (int i = 0; i < searchLog.queryNames.size(); i++) {
             outputPrinter.print(clustering.getLeftSets().find(i));

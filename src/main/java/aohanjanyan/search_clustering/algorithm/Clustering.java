@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class Clustering {
     private double threshold;
-    private MergeObserver mergeObserver;
+    private ClusteringObserver clusteringObserver;
     private DisjointSet leftSets, rightSets;
 
     /**
@@ -25,12 +25,12 @@ public class Clustering {
     }
 
     /**
-     * Set merge observer.
+     * Set clustering observer.
      *
-     * @param mergeObserver merge observer.
+     * @param clusteringObserver clustering observer.
      */
-    public void setMergeObserver(MergeObserver mergeObserver) {
-        this.mergeObserver = mergeObserver;
+    public void setClusteringObserver(ClusteringObserver clusteringObserver) {
+        this.clusteringObserver = clusteringObserver;
     }
 
     /**
@@ -57,6 +57,9 @@ public class Clustering {
     public void cluster(BiGraph graph) {
         GraphPartData leftPartData = initGraphPartData(graph.left, graph.right);
         GraphPartData rightPartData = initGraphPartData(graph.right, graph.left);
+        if (clusteringObserver != null) {
+            clusteringObserver.initFinished();
+        }
         int mergeCount = 0;
 
         while (findMaxSimilarity(leftPartData) != null
@@ -65,8 +68,8 @@ public class Clustering {
             Similarity maxSimilarity = findMaxSimilarity(leftPartData);
             if (maxSimilarity != null) {
                 mergeNodes(graph.left, leftPartData, graph.right, rightPartData, maxSimilarity);
-                if (mergeObserver != null) {
-                    mergeObserver.nodesMerged(maxSimilarity.first, maxSimilarity.second,
+                if (clusteringObserver != null) {
+                    clusteringObserver.nodesMerged(maxSimilarity.first, maxSimilarity.second,
                             true, ++mergeCount);
                 }
             }
@@ -74,8 +77,8 @@ public class Clustering {
             maxSimilarity = findMaxSimilarity(rightPartData);
             if (maxSimilarity != null) {
                 mergeNodes(graph.right, rightPartData, graph.left, leftPartData, maxSimilarity);
-                if (mergeObserver != null) {
-                    mergeObserver.nodesMerged(maxSimilarity.first, maxSimilarity.second,
+                if (clusteringObserver != null) {
+                    clusteringObserver.nodesMerged(maxSimilarity.first, maxSimilarity.second,
                             false, ++mergeCount);
                 }
             }
@@ -223,6 +226,9 @@ public class Clustering {
                     insertSimilarity(part, partData, nodeI, siblingI);
                 }
             }
+            if (clusteringObserver != null) {
+                clusteringObserver.nodeInitFinished(nodeI + 1);
+            }
         }
 
         return partData;
@@ -275,7 +281,19 @@ public class Clustering {
     /**
      * Class for observing the progress of the algorithm.
      */
-    public interface MergeObserver {
+    public interface ClusteringObserver {
+        /**
+         * Called after initiating a node.
+         *
+         * @param nodeI index of initiated node
+         */
+        void nodeInitFinished(int nodeI);
+
+        /**
+         * Called after init was finished.
+         */
+        void initFinished();
+
         /**
          * Called after each merge operation.
          * @param i index of the first node which was merged
