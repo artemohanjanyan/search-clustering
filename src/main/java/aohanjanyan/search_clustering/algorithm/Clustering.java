@@ -89,6 +89,9 @@ public class Clustering {
     // These methods are package-private just for testing.
     //---------------------------------------------------
 
+    /**
+     * Finds greatest similarity in part data.
+     */
     Similarity findMaxSimilarity(GraphPartData partData) {
         if (partData.similarities.size() == 0) {
             return null;
@@ -96,6 +99,10 @@ public class Clustering {
         return partData.similarities.descendingIterator().next();
     }
 
+    /**
+     * Merges nodes {@code similarity.first} and {@code similarity.second}
+     * in {@code part}.
+     */
     void mergeNodes(BiGraph.Part part,
                     GraphPartData partData,
                     BiGraph.Part otherPart,
