@@ -13,32 +13,12 @@ public class BiGraph {
      */
     public Part left = new Part(), right = new Part();
 
-    private static void sortPartEdges(Part part) {
-        for (Node node : part.nodes) {
-            node.edges.sort((edge1, edge2) -> {
-                if (edge1.dst < edge2.dst) {
-                    return -1;
-                } else if (edge1.dst > edge2.dst) {
-                    return 1;
-                }
-
-                if (edge1.weight < edge2.weight) {
-                    return -1;
-                } else if (edge1.weight > edge2.weight) {
-                    return 1;
-                }
-
-                return 0;
-            });
-        }
-    }
-
     /**
      * Sort all edges in adjacency list according to their destination node numbers.
      */
     public void sortEdges() {
-        sortPartEdges(left);
-        sortPartEdges(right);
+        left.sortEdges();
+        right.sortEdges();
     }
 
     /**
@@ -86,6 +66,27 @@ public class BiGraph {
          * A list of outgoing edges.
          */
         public List<Edge> edges = new ArrayList<>();
+
+        /**
+         * Sort all edges according to their destination node numbers.
+         */
+        public void sortEdges() {
+            edges.sort((edge1, edge2) -> {
+                if (edge1.dst < edge2.dst) {
+                    return -1;
+                } else if (edge1.dst > edge2.dst) {
+                    return 1;
+                }
+
+                if (edge1.weight < edge2.weight) {
+                    return -1;
+                } else if (edge1.weight > edge2.weight) {
+                    return 1;
+                }
+
+                return 0;
+            });
+        }
     }
 
     /**
@@ -113,6 +114,15 @@ public class BiGraph {
          */
         public Node get(int i) {
             return nodes.get(i);
+        }
+
+        /**
+         * Sort all edges according to their destination node numbers.
+         */
+        public void sortEdges() {
+            for (Node node : nodes) {
+                node.sortEdges();
+            }
         }
     }
 }

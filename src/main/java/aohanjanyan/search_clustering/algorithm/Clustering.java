@@ -56,7 +56,7 @@ public class Clustering {
      */
     public void cluster(BiGraph graph) {
         GraphPartData leftPartData = initGraphPartData(graph.left, graph.right);
-        GraphPartData rightPartData = initGraphPartData(graph.left, graph.right);
+        GraphPartData rightPartData = initGraphPartData(graph.right, graph.left);
         int mergeCount = 0;
 
         while (findMaxSimilarity(leftPartData) != null
@@ -150,11 +150,13 @@ public class Clustering {
 
         // Update edges to deleted node
         for (int otherNodeI : connectedToRemovedNode) {
-            for (BiGraph.Edge edge : otherPart.get(otherNodeI).edges) {
-                if (edge.dst == removedNodeI) {
-                    edge.dst = newNodeI;
-                }
-            }
+            otherPart.get(otherNodeI).edges.stream()
+                    .filter(edge -> edge.dst == removedNodeI)
+                    .findFirst()
+                    .ifPresent(
+                            edge -> edge.dst = newNodeI
+                    );
+            otherPart.get(otherNodeI).sortEdges();
         }
 
         // Update similarities for intersection

@@ -174,21 +174,48 @@ class ClusteringTest {
         clustering.mergeNodes(graph.right, rightPartData, graph.left, leftPartData,
                 rightPartData.similarities.descendingIterator().next());
 
-        int newNodeI = rightPartData.clusterSets.find(0);
-        assertThat(graph.left.nodes.get(0).edges, contains(new BiGraph.Edge(newNodeI, 1000)));
-        assertThat(graph.left.nodes.get(1).edges, contains(new BiGraph.Edge(newNodeI, 1010)));
-        assertThat(graph.left.nodes.get(2).edges, contains(new BiGraph.Edge(newNodeI, 1000)));
-        assertThat(graph.right.nodes.get(newNodeI).edges, contains(
+        int rightNodeI = rightPartData.clusterSets.find(0);
+
+        assertThat(graph.left.nodes.get(0).edges, contains(new BiGraph.Edge(rightNodeI, 1000)));
+        assertThat(graph.left.nodes.get(1).edges, contains(new BiGraph.Edge(rightNodeI, 1010)));
+        assertThat(graph.left.nodes.get(2).edges, contains(new BiGraph.Edge(rightNodeI, 1000)));
+
+        assertThat(graph.right.nodes.get(rightNodeI).edges, contains(
                 new BiGraph.Edge(0, 1000),
                 new BiGraph.Edge(1, 1010),
                 new BiGraph.Edge(2, 1000)
         ));
+
         assertThat(leftPartData.similarities, hasSize(3));
         assertThat(rightPartData.similarities, hasSize(0));
     }
 
     @Test
     void testMergeNodes2() {
+        clustering.mergeNodes(graph.right, rightPartData, graph.left, leftPartData,
+                rightPartData.similarities.descendingIterator().next());
+        int rightNodeI = rightPartData.clusterSets.find(0);
+
+        clustering.mergeNodes(graph.left, leftPartData, graph.right, rightPartData,
+                leftPartData.nodesSimilarities.get(2).iterator().next());
+        int leftNodeI = leftPartData.clusterSets.find(2);
+
+        assertThat(graph.left.nodes.get(0).edges,
+                contains(new BiGraph.Edge(rightNodeI, 1000)));
+        assertThat(graph.left.nodes.get(leftNodeI).edges,
+                contains(new BiGraph.Edge(rightNodeI, 2010)));
+
+        assertThat(graph.right.nodes.get(rightNodeI).edges, contains(
+                new BiGraph.Edge(0, 1000),
+                new BiGraph.Edge(leftNodeI, 2010)
+        ));
+
+        assertThat(leftPartData.similarities, hasSize(1));
+        assertThat(rightPartData.similarities, hasSize(0));
+    }
+
+    @Test
+    void testMergeNodes3() {
         clustering.mergeNodes(graph.left, leftPartData, graph.right, rightPartData,
                 leftPartData.similarities.descendingIterator().next());
         int newNodeI = leftPartData.clusterSets.find(1);

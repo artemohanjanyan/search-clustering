@@ -47,10 +47,10 @@ public class Main {
         System.out.println("Running clustering...");
         Clustering clustering = new Clustering(0.01);
         clustering.setMergeObserver((i, j, isLeftPart, mergeI) -> {
-            if (mergeI % 10000 == 0) {
+            if (mergeI % 100 == 0) {
                 System.out.print(mergeI + " ");
             }
-            if (mergeI % 100000 == 0) {
+            if (mergeI % 2000 == 0) {
                 System.out.println();
             }
         });
