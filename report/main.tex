@@ -1,0 +1,170 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtext}
+\usepackage{mathtools}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+%\usepackage{geometry}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{bm}
+%\usepackage{listings}
+\usepackage{cancel}
+\usepackage{proof}
+\usepackage{epigraph}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{stmaryrd}
+\usepackage{cellspace}
+\usepackage{cmll}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage{minted}
+%\usepackage{eucal}
+
+\usepackage[hidelinks]{hyperref}
+
+%\setmainfont[Ligatures=TeX,SmallCapsFont={Times New Roman}]{Palatino Linotype}
+
+\usepackage[russian]{babel}
+\selectlanguage{russian}
+
+\hypersetup{%
+    colorlinks=true,
+    linkcolor=blue
+}
+
+\pagenumbering{gobble}
+
+\title{Отчёт}
+\author{Артем Оганджанян}
+\date{}
+
+\begin{document}
+
+\usetikzlibrary{arrows.meta,positioning,matrix}
+
+\maketitle
+
+\section{\texorpdfstring{Детали реализации}{Implementation details}}
+Одно из узких мест алгоритма "--- пересчёт функции сходства после слияния вершин.
+Оптимально пересчитывать функцию сходства только между теми парами вершин, между которыми она могла измениться.
+Мы пользуемся следующей функцией сходства:
+\[
+    \mathrm{Sym}(x, y) = \begin{cases}
+        \frac{\displaystyle \left|L(x, y)\right|}{\displaystyle \left|L(x) \cup L(y)\right|}\text{,} &
+                \text{если }\left|L(x) \cup L(y)\right| > 0\text{;} \\
+        0 & \text{иначе.}
+    \end{cases}
+\]
+
+Пусть мы объединяем документы D1 и D2.
+Понятно, что в доле с документами изменятся только сходства с новой вершиной.
+Чтобы определить пары вершин из доли с запросами, между которыми может поменяться сходство,
+рассмотрим три множества вершин:
+\begin{enumerate}
+    \item зелёное множество вершин, которые связаны и с D1, и с D2;
+    \item жёлтое множество вершин, которые связаны только с D1;
+    \item розовое множество вершин, которые связаны только с D2.
+\end{enumerate}
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[-,every edge/.style={draw=black,thick}]
+    \begin{scope}[every node/.style={circle,thick,draw},align=center]
+        \node[fill=yellow] (q1) at  (0,0) {Q1};
+        \node[fill=yellow] (q2) at  (2,0) {Q2};
+        \node[fill=lime]   (q3) at  (4,0) {Q3};
+        \node[fill=lime]   (q4) at  (6,0) {Q4};
+        \node[fill=pink]   (q5) at  (8,0) {Q5};
+        \node[fill=pink]   (q6) at (10,0) {Q6};
+
+        \node              (d1) at (3,-2) {D1};
+        \node              (d2) at (7,-2) {D2};
+    \end{scope}
+
+    \path [-]  (q1) edge node[anchor=north east] {1} (d1)
+               (q2) edge node[anchor=east]       {2} (d1)
+               (q3) edge node[anchor=south east] {4} (d1)
+                    edge node[anchor=north]      {3} (d2)
+               (q4) edge node[anchor=north]      {3} (d1)
+                    edge node[anchor=south west] {4} (d2)
+               (q5) edge node[anchor=west]       {2} (d2)
+               (q6) edge node[anchor=north west] {1} (d2);
+    \end{tikzpicture}
+    \caption{Граф до слияния.}
+    \label{diagram}
+\end{figure}
+
+Во-первых, поменяются все сходства с зелёными вершинами, так как после слияния изменятся веса инцидентных им рёбер.
+Веса остальных рёбер не изменятся, однако появятся новые пары вершин из доли запросов, которые связаны с одинаковыми документами.
+Множество таких пар "--- декартово произведение жёлтого и розового множеств.
+Для таких пар изменится числитель из функции сходства.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[-,every edge/.style={draw=black,thick}]
+    \begin{scope}[every node/.style={circle,thick,draw},align=center]
+        \node[fill=yellow] (q1) at  (0,0) {Q1};
+        \node[fill=yellow] (q2) at  (2,0) {Q2};
+        \node[fill=lime]   (q3) at  (4,0) {Q3};
+        \node[fill=lime]   (q4) at  (6,0) {Q4};
+        \node[fill=pink]   (q5) at  (8,0) {Q5};
+        \node[fill=pink]   (q6) at (10,0) {Q6};
+
+        \node              (d1) at (5,-2) {D1,D2};
+    \end{scope}
+
+    \path [-] (q1) edge node[anchor=north] {1} (d1)
+              (q2) edge node[anchor=south] {2} (d1)
+              (q3) edge node[anchor=west]  {7} (d1)
+              (q4) edge node[anchor=east]  {7} (d1)
+              (q5) edge node[anchor=south] {2} (d1)
+              (q6) edge node[anchor=north] {1} (d1);
+    \end{tikzpicture}
+    \caption{Граф после слияния.}
+    \label{diagram}
+\end{figure}
+
+Для быстрого нахождения этих множеств было решено хранить граф в виде списка смежности,
+в котором списки смежности для каждой из вершин отсортированы согласно индексам.
+Таким образом, можно за линейное от количества связанных с D1 и D2 вершин время найти описанные множества,
+и построить список смежных вершин для новой вершины.
+Сделать это можно с помощью аналога алгоритма merge из merge sort.
+
+\section{\texorpdfstring{Результаты}{Results}}
+Реализованный алгоритм на больших входных данных ожидаемо упирается в ограничения оперативной памяти и начинает долго работать.
+Обработка 500000 случайных строк из 500k User Session Collection при threashold равном 0,9 использовала примерно 1,5 гигабайта памяти
+и завершилась примерно за 10 минут.
+201837 уникальных запросов были объединены в 105713 кластеров.
+Четыре кластера содержали не меньше 1000 вершин,
+55 кластеров содержали не меньше 100 вершин.
+При ручном рассмотрении нескольких кластеров нашлись визуально похожие запросы,
+но в больших кластерах часто между запросами не было явной связи.
+
+Для сборки проекта нужно запустить команду
+\begin{minted}{text}
+$ ./gradlew installDist
+\end{minted}
+в корневой директории.
+Послее этого в директории \texttt{build/install/search-clustering/bin/} появится исполняемый файл \texttt{search-clustering}.
+Через аргументы командной строки он принимает входные файлы,
+опцией \texttt{-o} задаётся выходной файл,
+опцией \texttt{-threshold} задаётся порог значения функции сходства.
+\begin{minted}{text}
+$ ./search-clustering                                                          
+Option "-o" is required
+ arguments    : input files
+ -o FILE      : output file
+ -threshold N : threshold (default: 0.1)
+$ ./search-clustering input -o output -threshold 0.9
+\end{minted}
+
+\end{document}
