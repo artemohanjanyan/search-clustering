@@ -86,6 +86,9 @@ public class Main {
                 return;
             }
         }
+        searchLog.queries = null;
+        searchLog.clicks = null;
+        searchLog.clickNames = null;
 
         searchLog.graph.sortEdges();
         System.out.println(searchLog.graph.left.nodes.size() + " unique queries");
